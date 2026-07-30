@@ -1,25 +1,19 @@
 import React, { useState } from "react";
 import { Wallet, Plus, Check, X } from "lucide-react";
 import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select, TextArea } from "../components/ui";
-import { COLORS, CATEGORIAS_GASTO, fmtDate, fmtMoney } from "../lib/constants";
+import { COLORS, CATEGORIAS_GASTO, fmtDate, fmtMoney, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
-import { useSession } from "../context/SessionContext";
-
-function userLabel(session, departamentos) {
-  if (session.papel === "admin") return "Dener (Administrador)";
-  const dep = departamentos.find(d => d.id === session.departamentoId)?.nome || "";
-  return `${session.papel === "lider" ? "Líder" : "Membro"} — ${dep}`;
-}
+import { useAuth } from "../context/AuthContext";
 
 export default function Gastos() {
-  const { session } = useSession();
+  const { profile } = useAuth();
   const { departamentos, gastos, gastosActions } = useChurchData();
   const [modalOpen, setModalOpen] = useState(false);
   const [filtroEstado, setFiltroEstado] = useState("todos");
 
-  const isAdmin = session.papel === "admin";
-  const myDeptId = session.departamentoId;
-  const currentUserName = userLabel(session, departamentos);
+  const isAdmin = profile.papel === "admin";
+  const myDeptId = profile.departamentoId;
+  const currentUserName = userLabel(profile, departamentos);
 
   async function addGasto(g) {
     await gastosActions.create(

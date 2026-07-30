@@ -1,16 +1,19 @@
 import React from "react";
 import { Building2 } from "lucide-react";
 import { Card, SectionTitle, Field, TextInput } from "../components/ui";
-import { COLORS } from "../lib/constants";
+import { COLORS, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Departamentos() {
+  const { profile } = useAuth();
   const { departamentos, pessoas, inventario, departamentosActions } = useChurchData();
+  const currentUserName = userLabel(profile, departamentos);
 
   async function updateLideres(dep, lideresStr) {
     const lideres = lideresStr.split(",").map(s => s.trim()).filter(Boolean);
     await departamentosActions.update(
-      dep.id, { ...dep, lideres }, "Dener (Administrador)",
+      dep.id, { ...dep, lideres }, currentUserName,
       `Atualizou líder(es) do departamento "${dep.nome}".`
     );
   }

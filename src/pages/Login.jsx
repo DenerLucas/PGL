@@ -1,22 +1,39 @@
 import React, { useState } from "react";
 import { LogIn, Cross } from "lucide-react";
-import { Card, Field, Select, Button } from "../components/ui";
+import { Card, Field, TextInput, Button } from "../components/ui";
 import { COLORS } from "../lib/constants";
-import { useSession } from "../context/SessionContext";
-import { useChurchData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  const { setSession } = useSession();
-  const { departamentos } = useChurchData();
-  const [papel, setPapel] = useState("admin");
-  const [deptId, setDeptId] = useState(departamentos[0]?.id || "");
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [erro, setErro] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErro("");
+    setLoading(true);
+    try {
+      await signIn(email.trim(), password);
+    } catch (err) {
+      setErro(
+        err.message === "Invalid login credentials"
+          ? "Email ou password incorretos."
+          : err.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
       background: COLORS.missao, padding: 24
     }}>
-      <Card style={{ width: 420, maxWidth: "100%" }}>
+      <Card style={{ width: 400, maxWidth: "100%" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 22 }}>
           <div style={{
             width: 62, height: 62, borderRadius: "50%", background: COLORS.info,
@@ -30,33 +47,27 @@ export default function Login() {
           <p style={{ margin: 0, color: COLORS.textSoft, fontSize: "0.85rem", textAlign: "center" }}>CCEA Famalicão</p>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <Field label="Entrar como">
-            <Select value={papel} onChange={(e) => setPapel(e.target.value)}>
-              <option value="admin">Administrador (Dener)</option>
-              <option value="lider">Líder de departamento</option>
-              <option value="membro">Voluntário / Membro</option>
-            </Select>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Field label="Email">
+            <TextInput type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="o-teu-email@exemplo.com" autoComplete="username" />
+          </Field>
+          <Field label="Password">
+            <TextInput type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" />
           </Field>
 
-          {papel !== "admin" && (
-            <Field label="Departamento">
-              <Select value={deptId} onChange={(e) => setDeptId(e.target.value)}>
-                {departamentos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}
-              </Select>
-            </Field>
+          {erro && (
+            <div style={{ background: "#F3DAD2", color: "#8A3A28", borderRadius: 8, padding: "8px 12px", fontSize: "0.82rem" }}>
+              {erro}
+            </div>
           )}
 
-          <Button
-            onClick={() => setSession({ papel, departamentoId: papel !== "admin" ? deptId : null })}
-            style={{ justifyContent: "center", marginTop: 6 }}
-          >
-            <LogIn size={16} /> Entrar
+          <Button type="submit" disabled={loading || !email || !password} style={{ justifyContent: "center", marginTop: 6 }}>
+            <LogIn size={16} /> {loading ? "A entrar..." : "Entrar"}
           </Button>
           <p style={{ fontSize: "0.75rem", color: COLORS.textSoft, textAlign: "center", margin: 0 }}>
-            Os dados desta plataforma são partilhados entre todos os utilizadores (Supabase).
+            Não tens conta? Pede ao Administrador para te criar um acesso.
           </p>
-        </div>
+        </form>
       </Card>
     </div>
   );

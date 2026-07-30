@@ -1,26 +1,20 @@
 import React, { useState } from "react";
 import { Package, Plus, Check, Trash2 } from "lucide-react";
 import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select } from "../components/ui";
-import { COLORS } from "../lib/constants";
+import { COLORS, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
-import { useSession } from "../context/SessionContext";
-
-function userLabel(session, departamentos) {
-  if (session.papel === "admin") return "Dener (Administrador)";
-  const dep = departamentos.find(d => d.id === session.departamentoId)?.nome || "";
-  return `${session.papel === "lider" ? "Líder" : "Membro"} — ${dep}`;
-}
+import { useAuth } from "../context/AuthContext";
 
 export default function Inventario() {
-  const { session } = useSession();
+  const { profile } = useAuth();
   const { departamentos, inventario, inventarioActions } = useChurchData();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const isAdmin = session.papel === "admin";
-  const isLider = session.papel === "lider";
-  const myDeptId = session.departamentoId;
+  const isAdmin = profile.papel === "admin";
+  const isLider = profile.papel === "lider";
+  const myDeptId = profile.departamentoId;
   const canManage = isAdmin || isLider;
-  const currentUserName = userLabel(session, departamentos);
+  const currentUserName = userLabel(profile, departamentos);
 
   async function save(item) {
     if (item.id) {

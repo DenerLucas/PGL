@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, Building2, Shield, CalendarDays, Package,
-  Wallet, FileBarChart, ScrollText, Cross
+  Wallet, FileBarChart, ScrollText, Cross, UserCog, KeyRound, LogOut
 } from "lucide-react";
-import { COLORS } from "../lib/constants";
-import { useSession } from "../context/SessionContext";
+import { COLORS, userLabel } from "../lib/constants";
+import { useAuth } from "../context/AuthContext";
 import { useChurchData } from "../context/DataContext";
+import { Modal, Field, TextInput, Button } from "./ui";
 
 const NAV_ITEMS = [
   { path: "/", label: "Painel", icon: LayoutDashboard, roles: ["admin", "lider", "membro"] },
@@ -18,17 +19,16 @@ const NAV_ITEMS = [
   { path: "/gastos", label: "Gastos", icon: Wallet, roles: ["admin", "lider"] },
   { path: "/relatorios", label: "Relatórios", icon: FileBarChart, roles: ["admin", "lider"] },
   { path: "/auditoria", label: "Log de auditoria", icon: ScrollText, roles: ["admin"] },
+  { path: "/utilizadores", label: "Utilizadores", icon: UserCog, roles: ["admin"] },
 ];
 
 export default function Sidebar() {
-  const { session, setSession } = useSession();
+  const { profile, signOut } = useAuth();
   const { departamentos } = useChurchData();
+  const [pwdModalOpen, setPwdModalOpen] = useState(false);
 
-  const currentUserName = session.papel === "admin"
-    ? "Dener (Administrador)"
-    : `${session.papel === "lider" ? "Líder" : "Membro"} — ${departamentos.find(d => d.id === session.departamentoId)?.nome || ""}`;
-
-  const items = NAV_ITEMS.filter((n) => n.roles.includes(session.papel));
+  const currentUserName = userLabel(profile, departamentos);
+  const items = NAV_ITEMS.filter((n) => n.roles.includes(profile.papel));
 
   return (
     <div style={{
@@ -70,16 +70,75 @@ export default function Sidebar() {
       <div style={{ flex: 1 }} />
       <div style={{
         borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 14, marginTop: 10,
-        display: "flex", flexDirection: "column", gap: 6
+        display: "flex", flexDirection: "column", gap: 8
       }}>
-        <div style={{ color: "#F3EFE3", fontSize: "0.8rem", fontWeight: 600 }}>{currentUserName}</div>
+        <div style={{ color: "#F3EFE3", fontSize: "0.8rem", fontWeight: 600, lineHeight: 1.3 }}>{currentUserName}</div>
         <button
-          onClick={() => setSession(null)}
-          style={{ background: "none", border: "none", color: COLORS.valores, fontSize: "0.78rem", cursor: "pointer", textAlign: "left", padding: 0, fontFamily: "inherit" }}
+          onClick={() => setPwdModalOpen(true)}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: COLORS.valores, fontSize: "0.78rem", cursor: "pointer", textAlign: "left", padding: 0, fontFamily: "inherit" }}
         >
-          Trocar utilizador
+          <KeyRound size={13} /> Mudar password
+        </button>
+        <button
+          onClick={signOut}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#E7B9AC", fontSize: "0.78rem", cursor: "pointer", textAlign: "left", padding: 0, fontFamily: "inherit" }}
+        >
+          <LogOut size={13} /> Sair
         </button>
       </div>
+
+      {pwdModalOpen && <ChangePasswordModal onClose={() => setPwdModalOpen(false)} />}
     </div>
+  );
+}
+
+function ChangePasswordModal({ onClose }) {
+  const { changePassword } = useAuth();
+  const [novaPassword, setNovaPassword] = useState("");
+  const [confirmar, setConfirmar] = useState("");
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSave() {
+    setErro("");
+    if (novaPassword.length < 6) { setErro("A password deve ter pelo menos 6 caracteres."); return; }
+    if (novaPassword !== confirmar) { setErro("As passwords não coincidem."); return; }
+    setLoading(true);
+    try {
+      await changePassword(novaPassword);
+      setSucesso(true);
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Modal title="Mudar password" onClose={onClose}>
+      {sucesso ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <p style={{ margin: 0, color: COLORS.text, fontSize: "0.88rem" }}>Password atualizada com sucesso.</p>
+          <Button onClick={onClose}>Fechar</Button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Field label="Nova password">
+            <TextInput type="password" value={novaPassword} onChange={(e) => setNovaPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+          </Field>
+          <Field label="Confirmar nova password">
+            <TextInput type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)} />
+          </Field>
+          {erro && (
+            <div style={{ background: "#F3DAD2", color: "#8A3A28", borderRadius: 8, padding: "8px 12px", fontSize: "0.82rem" }}>{erro}</div>
+          )}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button disabled={loading || !novaPassword || !confirmar} onClick={handleSave}>{loading ? "A guardar..." : "Guardar"}</Button>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }

@@ -1,27 +1,21 @@
 import React, { useState, useMemo } from "react";
 import { CalendarDays, Plus, Check, AlertTriangle, Trash2 } from "lucide-react";
 import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select } from "../components/ui";
-import { COLORS, PERIODOS, fmtDate, weekdayNameFromDateStr } from "../lib/constants";
+import { COLORS, PERIODOS, fmtDate, weekdayNameFromDateStr, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
-import { useSession } from "../context/SessionContext";
-
-function userLabel(session, departamentos) {
-  if (session.papel === "admin") return "Dener (Administrador)";
-  const dep = departamentos.find(d => d.id === session.departamentoId)?.nome || "";
-  return `${session.papel === "lider" ? "Líder" : "Membro"} — ${dep}`;
-}
+import { useAuth } from "../context/AuthContext";
 
 export default function Escalas() {
-  const { session } = useSession();
+  const { profile } = useAuth();
   const { departamentos, funcoes, pessoas, escalas, escalasActions } = useChurchData();
   const [modalOpen, setModalOpen] = useState(false);
   const [mesFiltro, setMesFiltro] = useState("");
 
-  const isAdmin = session.papel === "admin";
-  const isLider = session.papel === "lider";
-  const myDeptId = session.departamentoId;
+  const isAdmin = profile.papel === "admin";
+  const isLider = profile.papel === "lider";
+  const myDeptId = profile.departamentoId;
   const canManage = isAdmin || isLider;
-  const currentUserName = userLabel(session, departamentos);
+  const currentUserName = userLabel(profile, departamentos);
 
   async function addEscala(escala) {
     const dep = departamentos.find(x => x.id === escala.departamentoId);

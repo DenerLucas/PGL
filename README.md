@@ -14,13 +14,32 @@ Projeto Vite + React ligado ao Supabase. Este README traz o passo a passo comple
    - Escolhe um nome (ex: `ccea-famalicao`), uma password para a base de dados (guarda-a) e a região mais próxima (Europa).
 2. Espera 1-2 minutos até o projeto ficar pronto.
 3. No menu esquerdo, vai a **SQL Editor** → **New query**.
-4. Copia todo o conteúdo do ficheiro `supabase/schema.sql` (está neste projeto) e cola no editor.
-5. Clica **Run**. Isto cria as 7 tabelas, ativa a segurança (RLS), insere os 12 departamentos e algumas funções de exemplo.
-6. Vai a **Project Settings** (ícone de engrenagem) → **API**.
-   - Copia o **Project URL** → vai para `VITE_SUPABASE_URL`
-   - Copia a chave **anon public** → vai para `VITE_SUPABASE_ANON_KEY`
+4. Copia todo o conteúdo do ficheiro `supabase/schema.sql` e cola no editor. Clica **Run**.
+   - Isto cria as 7 tabelas de dados, insere os 12 departamentos e algumas funções de exemplo.
+5. Corre também o ficheiro `supabase/auth-migration.sql` (**New query** outra vez, cola o conteúdo, **Run**).
+   - Isto cria a tabela `perfis` (liga cada conta de login a um papel e departamento) e substitui o acesso aberto por regras que exigem sessão iniciada.
+6. Vai a **Project Settings** (ícone de engrenagem) → **API Keys**.
+   - Copia o **Project URL** → vai para `VITE_SUPABASE_URL` (sem `/rest/v1/` no final)
+   - Copia a **Publishable key** (`sb_publishable_...`) → vai para `VITE_SUPABASE_ANON_KEY`
+   - **Nunca uses a Secret key** (`sb_secret_...`) no frontend — essa ignora toda a segurança.
 
-> ⚠️ **Nota importante sobre segurança:** para simplificar esta fase de testes, a base de dados está aberta — qualquer pessoa com o link da app consegue ler e escrever dados (não há palavras-passe reais ainda, só escolha de perfil). Isto é adequado para o avaliador testar agora, mas antes de usar com dados reais da igreja, o próximo passo deve ser adicionar autenticação real (Supabase Auth) e políticas de RLS por utilizador.
+### Criar as contas de acesso (login real)
+
+7. Vai a **Authentication → Providers → Email** e desliga **"Allow new users to sign up"** — assim ninguém cria conta sozinho, só o Administrador.
+8. Cria a tua própria conta (Dener, Administrador):
+   - **Authentication → Users → Add user** → define o teu email e uma password.
+   - Copia o **User UID** que aparece na lista de utilizadores.
+   - Volta ao **SQL Editor** e corre (troca o UID pelo teu):
+     ```sql
+     insert into perfis (id, nome, papel, departamento_id)
+     values ('COLA-AQUI-O-TEU-USER-UID', 'Dener', 'admin', null);
+     ```
+9. A partir daqui, para dar acesso a mais pessoas (líderes, membros), já não precisas do SQL Editor:
+   - Cria a conta dela em **Authentication → Users → Add user**.
+   - Copia o User UID.
+   - Entra na app como Administrador → página **"Utilizadores"** → botão **"Atribuir acesso"** → cola o UID, o nome, o papel e o departamento.
+
+> Cada pessoa muda a própria password inicial depois de entrar, no menu lateral → **"Mudar password"**.
 
 ---
 
@@ -108,14 +127,23 @@ src/
     api.js               → funções de leitura/escrita nas tabelas
   context/
     DataContext.jsx      → carrega e sincroniza os dados (com tempo real)
-    SessionContext.jsx   → perfil de acesso atual (Admin/Líder/Membro)
+    AuthContext.jsx       → login real (Supabase Auth) + papel/departamento (tabela "perfis")
   components/
     ui.jsx               → Card, Button, Modal, etc. (estética CCEA)
-    Sidebar.jsx           → menu lateral
+    Sidebar.jsx           → menu lateral, mudar password, sair
   pages/
     Login.jsx, Dashboard.jsx, Pessoas.jsx, Departamentos.jsx,
     Funcoes.jsx, Escalas.jsx, Inventario.jsx, Gastos.jsx,
-    Relatorios.jsx, Auditoria.jsx
+    Relatorios.jsx, Auditoria.jsx, Utilizadores.jsx
 supabase/
-  schema.sql              → script para criar tudo no Supabase
+  schema.sql              → script inicial (tabelas de dados)
+  auth-migration.sql       → login real, tabela "perfis" e políticas de segurança
 ```
+
+## Modelo de segurança
+
+- Ninguém consegue ler ou escrever dados sem sessão iniciada (antes disto, o acesso era aberto).
+- **Administrador**: acesso total, incluindo aprovar/rejeitar gastos e atribuir acessos a outras pessoas.
+- **Líder**: pode gerir pessoas, escalas e inventário; pode registar gastos (ficam pendentes).
+- **Membro**: só pode ler dados (a app já filtra para mostrar apenas o que é do seu departamento).
+- As regras "líder só mexe no seu departamento" e "membro só vê o seu departamento" são aplicadas na interface. A camada de segurança da base de dados (RLS) garante que só quem tem sessão iniciada como admin ou líder consegue escrever, e só o admin consegue aprovar gastos — mas não impede um líder de editar dados de outro departamento diretamente na base de dados. Se mais tarde quiseres essa restrição também ao nível da base de dados, é um próximo passo que posso preparar.

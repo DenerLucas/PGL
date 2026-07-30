@@ -1,27 +1,30 @@
 import React, { useState } from "react";
 import { Shield, Plus, X } from "lucide-react";
 import { Card, SectionTitle, Button, Pill, Field, TextInput, Select } from "../components/ui";
-import { COLORS } from "../lib/constants";
+import { COLORS, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Funcoes() {
+  const { profile } = useAuth();
   const { departamentos, funcoes, funcoesActions } = useChurchData();
   const [novoNome, setNovoNome] = useState("");
   const [depId, setDepId] = useState(departamentos[0]?.id || "");
+  const currentUserName = userLabel(profile, departamentos);
 
   async function addFuncao() {
     if (!novoNome.trim()) return;
     const dep = departamentos.find(x => x.id === depId);
     await funcoesActions.create(
       { nome: novoNome.trim(), departamentoId: depId },
-      "Dener (Administrador)",
+      currentUserName,
       `Criou a função "${novoNome.trim()}" em "${dep?.nome}".`
     );
     setNovoNome("");
   }
 
   async function removeFuncao(f) {
-    await funcoesActions.remove(f.id, "Dener (Administrador)", `Removeu a função "${f.nome}".`);
+    await funcoesActions.remove(f.id, currentUserName, `Removeu a função "${f.nome}".`);
   }
 
   return (

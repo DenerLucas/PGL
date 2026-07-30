@@ -37,3 +37,10 @@ export function fmtDateTime(iso) {
 export function fmtMoney(v) {
   return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(Number(v) || 0);
 }
+
+export function userLabel(profile, departamentos) {
+  if (!profile) return "";
+  const papelLabel = profile.papel === "admin" ? "Administrador" : profile.papel === "lider" ? "Líder" : "Membro";
+  const dep = departamentos.find((d) => d.id === profile.departamentoId)?.nome;
+  return dep ? `${profile.nome} (${papelLabel} — ${dep})` : `${profile.nome} (${papelLabel})`;
+}

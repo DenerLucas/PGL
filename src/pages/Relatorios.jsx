@@ -3,15 +3,15 @@ import { FileBarChart } from "lucide-react";
 import { Card, SectionTitle, Button, Pill } from "../components/ui";
 import { COLORS, fmtDate, fmtMoney } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
-import { useSession } from "../context/SessionContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Relatorios() {
-  const { session } = useSession();
+  const { profile } = useAuth();
   const { departamentos, pessoas, funcoes, escalas, inventario, gastos } = useChurchData();
   const [aba, setAba] = useState("escalas");
 
-  const isAdmin = session.papel === "admin";
-  const myDeptId = session.departamentoId;
+  const isAdmin = profile.papel === "admin";
+  const myDeptId = profile.departamentoId;
 
   const gastosVisiveis = isAdmin ? gastos : gastos.filter(g => g.departamentoId === myDeptId);
   const inventarioVisivel = inventario.filter(i => isAdmin || i.departamentoId === myDeptId);

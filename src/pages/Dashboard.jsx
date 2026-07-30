@@ -4,10 +4,10 @@ import { LayoutDashboard } from "lucide-react";
 import { Card, SectionTitle, StatCard, Pill, Button } from "../components/ui";
 import { COLORS, fmtDate, fmtMoney } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
-import { useSession } from "../context/SessionContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
-  const { session } = useSession();
+  const { profile } = useAuth();
   const { departamentos, pessoas, escalas, funcoes, gastos } = useChurchData();
   const navigate = useNavigate();
   const hoje = new Date().toISOString().slice(0, 10);
@@ -68,7 +68,7 @@ export default function Dashboard() {
               </div>
             );
           })}
-          {(session.papel === "admin" || session.papel === "lider") && (
+          {(profile.papel === "admin" || profile.papel === "lider") && (
             <Button variant="secondary" onClick={() => navigate("/gastos")} style={{ marginTop: 14 }}>Ver gastos</Button>
           )}
         </Card>
