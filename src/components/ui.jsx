@@ -24,12 +24,12 @@ export function Pill({ children, tone = "info" }) {
   );
 }
 
-export function Card({ children, style }) {
+export function Card({ children, style, ...rest }) {
   return (
     <div style={{
       background: COLORS.card, borderRadius: 14, border: `1px solid ${COLORS.border}`,
       padding: 20, boxShadow: "0 1px 2px rgba(23,63,62,0.05)", ...style
-    }}>
+    }} {...rest}>
       {children}
     </div>
   );

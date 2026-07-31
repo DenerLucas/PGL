@@ -34,7 +34,7 @@ function SessionCard({ sessao, dep, onClick }) {
   const extra = sessao.itens.length - visiveis.length;
 
   return (
-    <Card style={{ cursor: "pointer", padding: 0, overflow: "hidden" }} onClickCapture={onClick}>
+    <Card style={{ cursor: "pointer", padding: 0, overflow: "hidden" }} onClick={onClick}>
       <div style={{ display: "flex", gap: 14, padding: 16 }}>
         <div style={{
           width: 56, height: 56, borderRadius: 12, background: COLORS.info, flexShrink: 0,
