@@ -35,11 +35,52 @@ Projeto Vite + React ligado ao Supabase. Este README traz o passo a passo comple
      values ('COLA-AQUI-O-TEU-USER-UID', 'Dener', 'admin', null);
      ```
 9. A partir daqui, para dar acesso a mais pessoas (líderes, membros), já não precisas do SQL Editor:
-   - Cria a conta dela em **Authentication → Users → Add user**.
-   - Copia o User UID.
-   - Entra na app como Administrador → página **"Utilizadores"** → botão **"Atribuir acesso"** → cola o UID, o nome, o papel e o departamento.
+   - Entra na app como Administrador → página **"Utilizadores"** → **"Criar utilizador"**.
+   - Preenche nome, email real, password (ou gera uma automática), papel e departamento.
+   - A app cria a conta de login **e** o perfil numa única ação — mas para isso funcionar, primeiro precisas de publicar a Edge Function abaixo.
 
 > Cada pessoa muda a própria password inicial depois de entrar, no menu lateral → **"Mudar password"**.
+
+---
+
+## Publicar a Edge Function "criar-utilizador" (necessário para a página Utilizadores criar contas)
+
+Criar contas de login é uma operação privilegiada — só pode ser feita com a chave **secreta** do Supabase, que nunca pode estar no código do site. Por isso essa parte corre numa "Edge Function": um pequeno servidor gerido pelo próprio Supabase, que guarda essa chave em segurança.
+
+### Opção 1 — pelo painel do Supabase (mais simples, se disponível no teu projeto)
+
+1. No menu esquerdo, vai a **Edge Functions**.
+2. Clica **Deploy a new function** (ou "Create a new function").
+3. Dá o nome exato: `criar-utilizador`
+4. Copia todo o conteúdo do ficheiro `supabase/functions/criar-utilizador/index.ts` deste projeto e cola no editor que aparece.
+5. Clica **Deploy**.
+6. Não precisas de configurar variáveis extra — `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` já ficam disponíveis automaticamente para qualquer Edge Function do teu projeto.
+
+### Opção 2 — pela linha de comandos (Supabase CLI), se a opção acima não aparecer no teu painel
+
+Precisas de [Node.js](https://nodejs.org) instalado.
+
+```bash
+npm install -g supabase
+supabase login
+```
+
+(Isto abre o browser para autorizares.)
+
+```bash
+cd ccea-platform
+supabase link --project-ref SUBSTITUI-PELO-TEU-PROJECT-REF
+```
+
+(O "project ref" é o código que aparece na tua URL do Supabase: `https://ESTE-CÓDIGO.supabase.co`)
+
+```bash
+supabase functions deploy criar-utilizador
+```
+
+### Confirmar que funcionou
+
+Depois de publicada (por qualquer uma das opções), volta à app → **Utilizadores** → **Criar utilizador**, preenche os dados de uma pessoa de teste e clica em criar. Se aparecer o ecrã "Utilizador criado" com email e password, está tudo a funcionar.
 
 ---
 
