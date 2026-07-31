@@ -38,6 +38,26 @@ export function fmtMoney(v) {
   return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(Number(v) || 0);
 }
 
+export const MESES_ABREV = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+export function dayMonth(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return { day: d.getDate(), month: MESES_ABREV[d.getMonth()], diaSemana: DIAS_SEMANA[d.getDay()] };
+}
+
+export function initials(nome) {
+  if (!nome) return "?";
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
+
+const AVATAR_TONES = ["#173F3E", "#2F7A73", "#93AD87", "#B4543C", "#7A4E12", "#54615C"];
+export function avatarTone(id) {
+  let hash = 0;
+  for (let i = 0; i < (id || "").length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return AVATAR_TONES[hash % AVATAR_TONES.length];
+}
 export function userLabel(profile, departamentos) {
   if (!profile) return "";
   const papelLabel = profile.papel === "admin" ? "Administrador" : profile.papel === "lider" ? "Líder" : "Membro";
