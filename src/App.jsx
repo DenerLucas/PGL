@@ -61,12 +61,13 @@ function Shell() {
 
   return (
     <DataProvider>
-      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.missao, fontFamily: "'Inter', system-ui, sans-serif", color: COLORS.text, position: "relative" }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.missao, fontFamily: "'Inter', system-ui, sans-serif", color: COLORS.text, position: "relative", maxWidth: "100vw", overflowX: "hidden" }}>
         <style>{`
           * { box-sizing: border-box; }
+          html, body { overflow-x: hidden; max-width: 100vw; }
           table { border-collapse: collapse; width: 100%; }
-          th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: ${COLORS.textSoft}; padding: 8px 10px; border-bottom: 2px solid ${COLORS.border}; }
-          td { padding: 10px 10px; border-bottom: 1px solid ${COLORS.border}; font-size: 0.87rem; vertical-align: middle; }
+          th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: ${COLORS.textSoft}; padding: 8px 10px; border-bottom: 2px solid ${COLORS.border}; white-space: nowrap; }
+          td { padding: 10px 10px; border-bottom: 1px solid ${COLORS.border}; font-size: 0.87rem; vertical-align: middle; white-space: nowrap; }
           tr:last-child td { border-bottom: none; }
 
           .menu-toggle-btn { display: none; }
@@ -90,7 +91,11 @@ function Shell() {
               display: flex; position: sticky; top: 0; z-index: 20;
             }
             .sidebar-close-btn { display: flex; }
-            .main-content { padding-top: 8px !important; }
+            .main-content { padding: 16px !important; }
+          }
+
+          @media (max-width: 480px) {
+            .card-grid { grid-template-columns: 1fr !important; }
           }
         `}</style>
 

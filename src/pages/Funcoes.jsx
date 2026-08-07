@@ -45,7 +45,7 @@ export default function Funcoes() {
         </div>
       </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+      <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
         {departamentos.map((dep) => {
           const funs = funcoes.filter(f => f.departamentoId === dep.id);
           return (

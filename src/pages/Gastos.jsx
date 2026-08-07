@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Wallet, Plus, Check, X } from "lucide-react";
-import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select, TextArea } from "../components/ui";
+import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select, TextArea, TableScroll } from "../components/ui";
 import { COLORS, CATEGORIAS_GASTO, fmtDate, fmtMoney, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
@@ -55,7 +55,7 @@ export default function Gastos() {
       </Card>
 
       <Card>
-        <table>
+        <TableScroll><table>
           <thead>
             <tr><th>Data</th><th>Departamento</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Estado</th>{isAdmin && <th></th>}</tr>
           </thead>
@@ -85,7 +85,7 @@ export default function Gastos() {
             })}
             {visiveis.length === 0 && <tr><td colSpan={7} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Nenhum gasto registado.</td></tr>}
           </tbody>
-        </table>
+        </table></TableScroll>
       </Card>
 
       {modalOpen && (

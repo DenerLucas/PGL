@@ -198,7 +198,7 @@ export default function Escalas() {
         <Card><p style={{ textAlign: "center", color: COLORS.textSoft, margin: 0, padding: 12 }}>Nenhuma escala encontrada.</p></Card>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+      <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
         {dias.map((d) => (
           <DayCard key={d.data} dia={d} departamentos={departamentos} onClick={() => setDiaAberto(d.data)} />
         ))}

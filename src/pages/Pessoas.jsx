@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Users, Plus, X, Check, Trash2 } from "lucide-react";
-import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select } from "../components/ui";
+import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select, TableScroll } from "../components/ui";
 import { COLORS, DIAS_SEMANA, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
@@ -48,7 +48,7 @@ export default function Pessoas() {
         action={canManage && <Button onClick={openNew}><Plus size={16} /> Nova pessoa</Button>}
       />
       <Card>
-        <table>
+        <TableScroll><table>
           <thead>
             <tr>
               <th>Nome</th><th>Contacto</th><th>Disponibilidade</th><th>Departamentos / Funções</th>
@@ -94,7 +94,7 @@ export default function Pessoas() {
               <tr><td colSpan={5} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Nenhuma pessoa cadastrada ainda.</td></tr>
             )}
           </tbody>
-        </table>
+        </table></TableScroll>
       </Card>
 
       {modalOpen && (

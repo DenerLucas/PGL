@@ -24,6 +24,14 @@ export function Pill({ children, tone = "info" }) {
   );
 }
 
+export function TableScroll({ children }) {
+  return (
+    <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: "-2px", padding: "2px" }}>
+      {children}
+    </div>
+  );
+}
+
 export function Card({ children, style, ...rest }) {
   return (
     <div style={{

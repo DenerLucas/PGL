@@ -21,7 +21,7 @@ export default function Departamentos() {
   return (
     <div>
       <SectionTitle icon={Building2} title="Departamentos" subtitle="Os 12 departamentos da CCEA Famalicão e os seus líderes" />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+      <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
         {departamentos.map((dep) => {
           const nPessoas = pessoas.filter(p => p.atribuicoes.some(a => a.departamentoId === dep.id)).length;
           const nItens = inventario.filter(i => i.departamentoId === dep.id).length;

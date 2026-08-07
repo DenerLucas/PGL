@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard } from "lucide-react";
-import { Card, SectionTitle, StatCard, Pill, Button } from "../components/ui";
+import { Card, SectionTitle, StatCard, Pill, Button, TableScroll } from "../components/ui";
 import { COLORS, fmtDate, fmtMoney } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
@@ -28,11 +28,11 @@ export default function Dashboard() {
         <StatCard label="Gastos pendentes" value={pendentes.length} tone={pendentes.length ? COLORS.danger : COLORS.info} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
+      <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
         <Card>
           <h3 style={{ marginTop: 0, fontFamily: "'Lora', serif", color: COLORS.info, fontSize: "1.05rem" }}>Próximas escalas</h3>
           {proximasEscalas.length === 0 && <p style={{ color: COLORS.textSoft, fontSize: "0.87rem" }}>Sem escalas futuras registadas ainda.</p>}
-          <table>
+          <TableScroll><table>
             <tbody>
               {proximasEscalas.map((e) => {
                 const dep = departamentos.find(d => d.id === e.departamentoId);
@@ -49,7 +49,7 @@ export default function Dashboard() {
                 );
               })}
             </tbody>
-          </table>
+          </table></TableScroll>
           <Button variant="secondary" onClick={() => navigate("/escalas")} style={{ marginTop: 14 }}>Ver todas as escalas</Button>
         </Card>
 

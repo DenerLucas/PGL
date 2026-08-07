@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { FileBarChart } from "lucide-react";
-import { Card, SectionTitle, Button, Pill } from "../components/ui";
+import { Card, SectionTitle, Button, Pill, TableScroll } from "../components/ui";
 import { COLORS, fmtDate, fmtMoney } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
@@ -47,7 +47,7 @@ export default function Relatorios() {
 
       {aba === "escalas" && (
         <Card>
-          <table>
+          <TableScroll><table>
             <thead><tr><th>Data</th><th>Período</th><th>Departamento</th><th>Função</th><th>Pessoa</th></tr></thead>
             <tbody>
               {[...escalasVisiveis].sort((a, b) => b.data.localeCompare(a.data)).map((e) => {
@@ -63,13 +63,13 @@ export default function Relatorios() {
               })}
               {escalasVisiveis.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Sem histórico.</td></tr>}
             </tbody>
-          </table>
+          </table></TableScroll>
         </Card>
       )}
 
       {aba === "financeiro" && (
         <Card>
-          <table>
+          <TableScroll><table>
             <thead><tr><th>Departamento</th><th>Mês</th><th>Total aprovado</th></tr></thead>
             <tbody>
               {financeiroPorDept.map((row, i) => (
@@ -77,13 +77,13 @@ export default function Relatorios() {
               ))}
               {financeiroPorDept.length === 0 && <tr><td colSpan={3} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Sem gastos aprovados ainda.</td></tr>}
             </tbody>
-          </table>
+          </table></TableScroll>
         </Card>
       )}
 
       {aba === "inventario" && (
         <Card>
-          <table>
+          <TableScroll><table>
             <thead><tr><th>Item</th><th>Departamento</th><th>Localização</th><th>Estado</th></tr></thead>
             <tbody>
               {inventarioVisivel.map((i) => {
@@ -95,7 +95,7 @@ export default function Relatorios() {
               })}
               {inventarioVisivel.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Sem itens.</td></tr>}
             </tbody>
-          </table>
+          </table></TableScroll>
         </Card>
       )}
     </div>

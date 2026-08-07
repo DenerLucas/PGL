@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Package, Plus, Check, Trash2 } from "lucide-react";
-import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select } from "../components/ui";
+import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select, TableScroll } from "../components/ui";
 import { COLORS, userLabel } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
@@ -41,7 +41,7 @@ export default function Inventario() {
         action={canManage && <Button onClick={() => setModalOpen(true)}><Plus size={16} /> Novo item</Button>}
       />
       <Card>
-        <table>
+        <TableScroll><table>
           <thead>
             <tr><th>Item</th><th>Departamento</th><th>Localização</th><th>Estado</th>{canManage && <th></th>}</tr>
           </thead>
@@ -68,7 +68,7 @@ export default function Inventario() {
             })}
             {visiveis.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Sem itens registados.</td></tr>}
           </tbody>
-        </table>
+        </table></TableScroll>
       </Card>
 
       {modalOpen && (

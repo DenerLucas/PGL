@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { UserCog, Plus, Trash2, Check, RefreshCw, Copy } from "lucide-react";
-import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select } from "../components/ui";
+import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select, TableScroll } from "../components/ui";
 import { COLORS, userLabel } from "../lib/constants";
 import { supabase } from "../lib/supabaseClient";
 import { criarUtilizador, gerarPasswordAleatoria } from "../lib/adminApi";
@@ -42,7 +42,7 @@ export default function Utilizadores() {
       />
 
       <Card>
-        <table>
+        <TableScroll><table>
           <thead><tr><th>Nome</th><th>Papel</th><th>Departamento</th><th></th></tr></thead>
           <tbody>
             {perfis.map((p) => {
@@ -67,7 +67,7 @@ export default function Utilizadores() {
               <tr><td colSpan={4} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Nenhum utilizador ainda.</td></tr>
             )}
           </tbody>
-        </table>
+        </table></TableScroll>
       </Card>
 
       {modalOpen && (
