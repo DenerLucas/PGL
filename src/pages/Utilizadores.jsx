@@ -13,6 +13,7 @@ export default function Utilizadores() {
   const [perfis, setPerfis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editando, setEditando] = useState(null);
   const currentUserName = userLabel(profile, departamentos);
 
   const carregar = useCallback(async () => {
@@ -46,28 +47,33 @@ export default function Utilizadores() {
 
       <Card>
         <TableScroll><table>
-          <thead><tr><th>Nome</th><th>Papel</th><th>Departamento</th><th></th></tr></thead>
+          <thead><tr><th>Nome</th><th>Papel</th><th>Departamento</th><th>Pessoa ligada</th><th></th></tr></thead>
           <tbody>
             {perfis.map((p) => {
               const dep = departamentos.find(d => d.id === p.departamento_id);
+              const pessoaLigada = pessoas.find(ps => ps.id === p.pessoa_id);
               const tone = p.papel === "admin" ? "info" : p.papel === "lider" ? "comunidade" : "valores";
               return (
                 <tr key={p.id}>
                   <td style={{ fontWeight: 600 }}>{p.nome}</td>
                   <td><Pill tone={tone}>{p.papel}</Pill></td>
                   <td>{dep?.nome || "—"}</td>
+                  <td>{pessoaLigada?.nome || "—"}</td>
                   <td>
-                    {p.id !== profile.id && (
-                      <button onClick={() => removerPerfil(p)} style={{ background: "none", border: "none", color: COLORS.danger, cursor: "pointer" }}>
-                        <Trash2 size={14} />
-                      </button>
-                    )}
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <Button variant="secondary" onClick={() => setEditando(p)} style={{ padding: "6px 10px" }}>Editar</Button>
+                      {p.id !== profile.id && (
+                        <button onClick={() => removerPerfil(p)} style={{ background: "none", border: "none", color: COLORS.danger, cursor: "pointer" }}>
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
             })}
             {!loading && perfis.length === 0 && (
-              <tr><td colSpan={4} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Nenhum utilizador ainda.</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: "center", color: COLORS.textSoft, padding: 20 }}>Nenhum utilizador ainda.</td></tr>
             )}
           </tbody>
         </table></TableScroll>
@@ -81,7 +87,90 @@ export default function Utilizadores() {
           onCreated={(nome) => { addLog(currentUserName, `Criou o acesso de "${nome}".`); carregar(); }}
         />
       )}
+
+      {editando && (
+        <EditarUtilizadorModal
+          perfil={editando}
+          departamentos={departamentos}
+          pessoas={pessoas}
+          onClose={() => setEditando(null)}
+          onSaved={(nome) => { addLog(currentUserName, `Editou o acesso de "${nome}".`); setEditando(null); carregar(); }}
+        />
+      )}
     </div>
+  );
+}
+
+function EditarUtilizadorModal({ perfil, departamentos, pessoas, onClose, onSaved }) {
+  const [nome, setNome] = useState(perfil.nome);
+  const [papel, setPapel] = useState(perfil.papel);
+  const [departamentoId, setDepartamentoId] = useState(perfil.departamento_id || departamentos[0]?.id || "");
+  const [pessoaId, setPessoaId] = useState(perfil.pessoa_id || "");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+
+  const pessoasDoDept = pessoas.filter(p => p.atribuicoes.some(a => a.departamentoId === departamentoId));
+  const podeGuardar = nome.trim() && papel && (papel === "admin" || departamentoId);
+
+  async function handleSubmit() {
+    setErro("");
+    setLoading(true);
+    const { error } = await supabase.from("perfis").update({
+      nome: nome.trim(),
+      papel,
+      departamento_id: papel === "admin" ? null : departamentoId,
+      pessoa_id: papel === "admin" ? null : (pessoaId || null),
+    }).eq("id", perfil.id);
+    setLoading(false);
+    if (error) { setErro(error.message); return; }
+    onSaved(nome.trim());
+  }
+
+  return (
+    <Modal title="Editar utilizador" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Field label="Nome da pessoa">
+          <TextInput value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" />
+        </Field>
+        <Field label="Papel">
+          <Select value={papel} onChange={(e) => setPapel(e.target.value)}>
+            <option value="admin">Administrador</option>
+            <option value="lider">Líder de departamento</option>
+            <option value="membro">Voluntário / Membro</option>
+          </Select>
+        </Field>
+        {papel !== "admin" && (
+          <>
+            <Field label="Departamento">
+              <Select value={departamentoId} onChange={(e) => { setDepartamentoId(e.target.value); setPessoaId(""); }}>
+                {departamentos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}
+              </Select>
+            </Field>
+            <Field label="Ligar a uma pessoa da escala (para o membro ver só a própria escala)">
+              <Select value={pessoaId} onChange={(e) => setPessoaId(e.target.value)}>
+                <option value="">Não ligar a ninguém em "Pessoas"</option>
+                {pessoasDoDept.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </Select>
+            </Field>
+          </>
+        )}
+
+        {erro && (
+          <div style={{ background: "#F3DAD2", color: "#8A3A28", borderRadius: 8, padding: "8px 12px", fontSize: "0.82rem" }}>{erro}</div>
+        )}
+
+        <p style={{ fontSize: "0.76rem", color: COLORS.textSoft, margin: 0 }}>
+          O email de login não pode ser mudado aqui — para isso, é preciso remover e criar de novo.
+        </p>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button disabled={!podeGuardar || loading} onClick={handleSubmit}>
+            <Check size={16} /> {loading ? "A guardar..." : "Guardar"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

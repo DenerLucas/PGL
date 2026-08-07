@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LogIn, Cross } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { Card, Field, TextInput, Button } from "../components/ui";
 import { COLORS } from "../lib/constants";
 import { useAuth } from "../context/AuthContext";
@@ -35,12 +35,7 @@ export default function Login() {
     }}>
       <Card style={{ width: 400, maxWidth: "100%" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 22 }}>
-          <div style={{
-            width: 62, height: 62, borderRadius: "50%", background: COLORS.info,
-            display: "flex", alignItems: "center", justifyContent: "center"
-          }}>
-            <Cross size={28} color={COLORS.valores} />
-          </div>
+          <img src="/logo-ccea.png" alt="CCEA Famalicão" style={{ width: 84, height: 84, borderRadius: "50%", objectFit: "cover" }} />
           <h1 style={{ margin: 0, fontFamily: "'Lora', serif", color: COLORS.info, fontSize: "1.3rem", textAlign: "center" }}>
             Plataforma de Departamentos
           </h1>

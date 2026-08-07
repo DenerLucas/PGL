@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, Building2, Shield, CalendarDays, Package,
-  Wallet, FileBarChart, ScrollText, Cross, UserCog, KeyRound, LogOut, X
+  Wallet, FileBarChart, ScrollText, UserCog, KeyRound, LogOut, X
 } from "lucide-react";
 import { COLORS, userLabel } from "../lib/constants";
 import { useAuth } from "../context/AuthContext";
@@ -37,12 +37,7 @@ export default function Sidebar({ open, onNavigate }) {
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px", marginBottom: 22 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: "50%", background: COLORS.valores,
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
-          }}>
-            <Cross size={18} color={COLORS.infoDark} />
-          </div>
+          <img src="/logo-ccea.png" alt="CCEA Famalicão" style={{ width: 38, height: 38, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
           <div>
             <div style={{ color: "#F3EFE3", fontFamily: "'Lora', serif", fontWeight: 600, fontSize: "0.95rem", lineHeight: 1.1 }}>CCEA Famalicão</div>
             <div style={{ color: COLORS.valores, fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.04em" }}>DEPARTAMENTOS</div>
