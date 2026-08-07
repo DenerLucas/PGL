@@ -3,7 +3,7 @@ import { UserCog, Plus, Trash2, Check, RefreshCw, Copy } from "lucide-react";
 import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select, TableScroll } from "../components/ui";
 import { COLORS, userLabel } from "../lib/constants";
 import { supabase } from "../lib/supabaseClient";
-import { criarUtilizador, gerarPasswordAleatoria } from "../lib/adminApi";
+import { criarUtilizador, gerarPasswordAleatoria, removerUtilizador } from "../lib/adminApi";
 import { useChurchData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -25,11 +25,14 @@ export default function Utilizadores() {
   useEffect(() => { carregar(); }, [carregar]);
 
   async function removerPerfil(p) {
-    if (!confirm(`Remover o acesso de "${p.nome}" à plataforma? A conta de login não é apagada, só deixa de conseguir entrar.`)) return;
-    const { error } = await supabase.from("perfis").delete().eq("id", p.id);
-    if (error) { alert("Erro: " + error.message); return; }
-    addLog(currentUserName, `Removeu o acesso de "${p.nome}".`);
-    carregar();
+    if (!confirm(`Remover por completo o acesso de "${p.nome}" à plataforma? Isto apaga a conta de login — o email fica livre para ser usado de novo, se for preciso.`)) return;
+    try {
+      await removerUtilizador(p.id);
+      addLog(currentUserName, `Removeu o acesso de "${p.nome}".`);
+      carregar();
+    } catch (e) {
+      alert("Erro: " + e.message);
+    }
   }
 
   return (

@@ -28,3 +28,23 @@ export function gerarPasswordAleatoria() {
   for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
   return out;
 }
+
+export async function removerUtilizador(uid) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error("Sessão expirada. Volta a entrar e tenta de novo.");
+
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/remover-utilizador`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ uid }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || "Erro ao remover utilizador.");
+  return body;
+}
