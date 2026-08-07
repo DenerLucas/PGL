@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Utilizadores() {
   const { profile } = useAuth();
-  const { departamentos, addLog } = useChurchData();
+  const { departamentos, pessoas, addLog } = useChurchData();
   const [perfis, setPerfis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -73,6 +73,7 @@ export default function Utilizadores() {
       {modalOpen && (
         <NovoUtilizadorModal
           departamentos={departamentos}
+          pessoas={pessoas}
           onClose={() => setModalOpen(false)}
           onCreated={(nome) => { addLog(currentUserName, `Criou o acesso de "${nome}".`); carregar(); }}
         />
@@ -81,23 +82,25 @@ export default function Utilizadores() {
   );
 }
 
-function NovoUtilizadorModal({ departamentos, onClose, onCreated }) {
+function NovoUtilizadorModal({ departamentos, pessoas, onClose, onCreated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState(gerarPasswordAleatoria());
   const [nome, setNome] = useState("");
   const [papel, setPapel] = useState("membro");
   const [departamentoId, setDepartamentoId] = useState(departamentos[0]?.id || "");
+  const [pessoaId, setPessoaId] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState(null); // { email, password }
 
+  const pessoasDoDept = pessoas.filter(p => p.atribuicoes.some(a => a.departamentoId === departamentoId));
   const podeGuardar = email.trim() && password.length >= 6 && nome.trim() && papel && (papel === "admin" || departamentoId);
 
   async function handleSubmit() {
     setErro("");
     setLoading(true);
     try {
-      await criarUtilizador({ email: email.trim(), password, nome: nome.trim(), papel, departamentoId });
+      await criarUtilizador({ email: email.trim(), password, nome: nome.trim(), papel, departamentoId, pessoaId: pessoaId || null });
       setSucesso({ email: email.trim(), password });
       onCreated(nome.trim());
     } catch (e) {
@@ -157,11 +160,19 @@ function NovoUtilizadorModal({ departamentos, onClose, onCreated }) {
           </Select>
         </Field>
         {papel !== "admin" && (
-          <Field label="Departamento">
-            <Select value={departamentoId} onChange={(e) => setDepartamentoId(e.target.value)}>
-              {departamentos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}
-            </Select>
-          </Field>
+          <>
+            <Field label="Departamento">
+              <Select value={departamentoId} onChange={(e) => { setDepartamentoId(e.target.value); setPessoaId(""); }}>
+                {departamentos.map((d) => <option key={d.id} value={d.id}>{d.nome}</option>)}
+              </Select>
+            </Field>
+            <Field label="Ligar a uma pessoa da escala (opcional, mas necessário para o membro ver só a própria escala)">
+              <Select value={pessoaId} onChange={(e) => setPessoaId(e.target.value)}>
+                <option value="">Não ligar a ninguém em "Pessoas"</option>
+                {pessoasDoDept.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </Select>
+            </Field>
+          </>
         )}
 
         {erro && (

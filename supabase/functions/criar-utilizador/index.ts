@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       return json({ error: "Só o Administrador pode criar utilizadores." }, 403);
     }
 
-    const { email, password, nome, papel, departamentoId } = await req.json();
+    const { email, password, nome, papel, departamentoId, pessoaId } = await req.json();
 
     if (!email || !password || !nome || !papel) {
       return json({ error: "Faltam campos obrigatórios (email, password, nome, papel)." }, 400);
@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
       nome,
       papel,
       departamento_id: papel === "admin" ? null : departamentoId,
+      pessoa_id: papel === "admin" ? null : (pessoaId || null),
     });
 
     if (perfilErr) {

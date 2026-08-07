@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { DataProvider } from "./context/DataContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { COLORS } from "./lib/constants";
@@ -36,6 +37,7 @@ function RequireRole({ roles, children }) {
 
 function Shell() {
   const { authUser, profile, loading, error, signOut } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) return <CenteredMessage>A verificar sessão...</CenteredMessage>;
   if (!authUser) return <Login />;
@@ -59,16 +61,53 @@ function Shell() {
 
   return (
     <DataProvider>
-      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.missao, fontFamily: "'Inter', system-ui, sans-serif", color: COLORS.text }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.missao, fontFamily: "'Inter', system-ui, sans-serif", color: COLORS.text, position: "relative" }}>
         <style>{`
           * { box-sizing: border-box; }
           table { border-collapse: collapse; width: 100%; }
           th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: ${COLORS.textSoft}; padding: 8px 10px; border-bottom: 2px solid ${COLORS.border}; }
           td { padding: 10px 10px; border-bottom: 1px solid ${COLORS.border}; font-size: 0.87rem; vertical-align: middle; }
           tr:last-child td { border-bottom: none; }
+
+          .menu-toggle-btn { display: none; }
+          .sidebar-overlay { display: none; }
+          .sidebar-close-btn { display: none; }
+
+          @media (max-width: 860px) {
+            .sidebar {
+              position: fixed; top: 0; left: 0; height: 100vh; z-index: 50;
+              transform: translateX(-100%); transition: transform 0.22s ease;
+            }
+            .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(14,43,42,0.25); }
+            .sidebar-overlay {
+              display: block; position: fixed; inset: 0; background: rgba(14,43,42,0.45);
+              z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+            }
+            .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+            .menu-toggle-btn {
+              display: flex; position: sticky; top: 0; z-index: 20;
+            }
+            .sidebar-close-btn { display: flex; }
+            .main-content { padding-top: 8px !important; }
+          }
         `}</style>
-        <Sidebar />
-        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto" }}>
+
+        <div className={`sidebar-overlay${sidebarOpen ? " open" : ""}`} onClick={() => setSidebarOpen(false)} />
+        <Sidebar open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
+
+        <div className="main-content" style={{ flex: 1, padding: "28px 32px", overflowY: "auto", minWidth: 0 }}>
+          <button
+            className="menu-toggle-btn"
+            onClick={() => setSidebarOpen(true)}
+            style={{
+              alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 16,
+              background: COLORS.info, color: "#F3EFE3", border: "none", borderRadius: 9,
+              padding: "9px 14px", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer"
+            }}
+          >
+            <Menu size={17} /> Menu
+          </button>
+
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/pessoas" element={<Pessoas />} />

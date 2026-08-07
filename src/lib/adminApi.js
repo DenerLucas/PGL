@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 
-export async function criarUtilizador({ email, password, nome, papel, departamentoId }) {
+export async function criarUtilizador({ email, password, nome, papel, departamentoId, pessoaId }) {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error("Sessão expirada. Volta a entrar e tenta de novo.");
@@ -12,7 +12,7 @@ export async function criarUtilizador({ email, password, nome, papel, departamen
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ email, password, nome, papel, departamentoId }),
+    body: JSON.stringify({ email, password, nome, papel, departamentoId, pessoaId }),
   });
 
   const body = await res.json().catch(() => ({}));

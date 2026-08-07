@@ -32,6 +32,7 @@ export function AuthProvider({ children }) {
       nome: data.nome,
       papel: data.papel,
       departamentoId: data.departamento_id,
+      pessoaId: data.pessoa_id || null,
     });
   }, []);
 

@@ -18,6 +18,7 @@ Projeto Vite + React ligado ao Supabase. Este README traz o passo a passo comple
    - Isto cria as 7 tabelas de dados, insere os 12 departamentos e algumas funções de exemplo.
 5. Corre também o ficheiro `supabase/auth-migration.sql` (**New query** outra vez, cola o conteúdo, **Run**).
    - Isto cria a tabela `perfis` (liga cada conta de login a um papel e departamento) e substitui o acesso aberto por regras que exigem sessão iniciada.
+6. Corre também `supabase/link-perfis-pessoas.sql` — liga cada conta de login a uma "pessoa" da escala, para cada membro poder ver só a própria escala (e não a do departamento inteiro).
 6. Vai a **Project Settings** (ícone de engrenagem) → **API Keys**.
    - Copia o **Project URL** → vai para `VITE_SUPABASE_URL` (sem `/rest/v1/` no final)
    - Copia a **Publishable key** (`sb_publishable_...`) → vai para `VITE_SUPABASE_ANON_KEY`

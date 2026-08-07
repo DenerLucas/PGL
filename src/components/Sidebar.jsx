@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, Building2, Shield, CalendarDays, Package,
-  Wallet, FileBarChart, ScrollText, Cross, UserCog, KeyRound, LogOut
+  Wallet, FileBarChart, ScrollText, Cross, UserCog, KeyRound, LogOut, X
 } from "lucide-react";
 import { COLORS, userLabel } from "../lib/constants";
 import { useAuth } from "../context/AuthContext";
@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { path: "/utilizadores", label: "Utilizadores", icon: UserCog, roles: ["admin"] },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ open, onNavigate }) {
   const { profile, signOut } = useAuth();
   const { departamentos } = useChurchData();
   const [pwdModalOpen, setPwdModalOpen] = useState(false);
@@ -31,21 +31,30 @@ export default function Sidebar() {
   const items = NAV_ITEMS.filter((n) => n.roles.includes(profile.papel));
 
   return (
-    <div style={{
+    <div className={`sidebar${open ? " open" : ""}`} style={{
       width: 232, background: COLORS.info, padding: "22px 14px", display: "flex", flexDirection: "column",
       gap: 4, flexShrink: 0, minHeight: "100vh"
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 8px", marginBottom: 22 }}>
-        <div style={{
-          width: 38, height: 38, borderRadius: "50%", background: COLORS.valores,
-          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
-        }}>
-          <Cross size={18} color={COLORS.infoDark} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px", marginBottom: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: "50%", background: COLORS.valores,
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+          }}>
+            <Cross size={18} color={COLORS.infoDark} />
+          </div>
+          <div>
+            <div style={{ color: "#F3EFE3", fontFamily: "'Lora', serif", fontWeight: 600, fontSize: "0.95rem", lineHeight: 1.1 }}>CCEA Famalicão</div>
+            <div style={{ color: COLORS.valores, fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.04em" }}>DEPARTAMENTOS</div>
+          </div>
         </div>
-        <div>
-          <div style={{ color: "#F3EFE3", fontFamily: "'Lora', serif", fontWeight: 600, fontSize: "0.95rem", lineHeight: 1.1 }}>CCEA Famalicão</div>
-          <div style={{ color: COLORS.valores, fontSize: "0.68rem", fontWeight: 600, letterSpacing: "0.04em" }}>DEPARTAMENTOS</div>
-        </div>
+        <button
+          onClick={onNavigate}
+          className="sidebar-close-btn"
+          style={{ background: "none", border: "none", color: "#F3EFE3", cursor: "pointer", padding: 4 }}
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {items.map((item) => {
@@ -55,6 +64,7 @@ export default function Sidebar() {
             key={item.path}
             to={item.path}
             end={item.path === "/"}
+            onClick={onNavigate}
             style={({ isActive }) => ({
               display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 9,
               textDecoration: "none", fontSize: "0.87rem", fontWeight: 600,

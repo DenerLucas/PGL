@@ -1,9 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { CalendarDays, Plus, Check, AlertTriangle, Trash2, Users, X } from "lucide-react";
+import { CalendarDays, Plus, Check, AlertTriangle, Trash2, Users, Info } from "lucide-react";
 import { Card, SectionTitle, Button, Pill, Modal, Field, TextInput, Select } from "../components/ui";
 import { COLORS, PERIODOS, fmtDate, weekdayNameFromDateStr, userLabel, dayMonth, initials, avatarTone } from "../lib/constants";
 import { useChurchData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
+
+function hojeStr() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function groupSessions(escalas) {
   const map = new Map();
@@ -13,6 +17,19 @@ function groupSessions(escalas) {
     map.get(key).itens.push(e);
   });
   return Array.from(map.values());
+}
+
+function groupByDay(escalas) {
+  const map = new Map();
+  escalas.forEach((e) => {
+    if (!map.has(e.data)) map.set(e.data, []);
+    map.get(e.data).push(e);
+  });
+  return Array.from(map.entries()).map(([data, itens]) => ({
+    data,
+    itens,
+    sessoes: groupSessions(itens),
+  }));
 }
 
 function Avatar({ nome, id, size = 30 }) {
@@ -28,10 +45,23 @@ function Avatar({ nome, id, size = 30 }) {
   );
 }
 
-function SessionCard({ sessao, dep, onClick }) {
-  const { day, month, diaSemana } = dayMonth(sessao.data);
-  const visiveis = sessao.itens.slice(0, 6);
-  const extra = sessao.itens.length - visiveis.length;
+function usarSobrecarga(escalas, pessoaId, data, departamentoIdAtual) {
+  if (!pessoaId || !data) return null;
+  const deps = new Set(
+    escalas.filter(e => e.pessoaId === pessoaId && e.data === data).map(e => e.departamentoId)
+  );
+  deps.add(departamentoIdAtual);
+  if (deps.size > 2) return `Esta pessoa ficaria escalada em ${deps.size} departamentos diferentes neste mesmo dia — confirma que não está sobrecarregada.`;
+  return null;
+}
+
+// ---------- Cartão de dia ----------
+function DayCard({ dia, departamentos, onClick }) {
+  const { day, month, diaSemana } = dayMonth(dia.data);
+  const totalPessoas = new Set(dia.itens.map(e => e.pessoaId)).size;
+  const deps = [...new Set(dia.itens.map(e => e.departamentoId))].map(id => departamentos.find(d => d.id === id)?.nome).filter(Boolean);
+  const depsVisiveis = deps.slice(0, 3);
+  const extra = deps.length - depsVisiveis.length;
 
   return (
     <Card style={{ cursor: "pointer", padding: 0, overflow: "hidden" }} onClick={onClick}>
@@ -44,32 +74,48 @@ function SessionCard({ sessao, dep, onClick }) {
           <div style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>{month}</div>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <h3 style={{ margin: 0, fontFamily: "'Lora', serif", color: COLORS.info, fontSize: "1.02rem" }}>{dep?.nome}</h3>
-            <Pill tone="comunidade">{sessao.periodo}</Pill>
+          <h3 style={{ margin: 0, fontFamily: "'Lora', serif", color: COLORS.info, fontSize: "1.02rem" }}>{diaSemana}</h3>
+          <div style={{ fontSize: "0.78rem", color: COLORS.textSoft, marginTop: 2 }}>{fmtDate(dia.data)}</div>
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+            {depsVisiveis.map((n) => <Pill key={n} tone="comunidade">{n}</Pill>)}
+            {extra > 0 && <Pill tone="missao">+{extra}</Pill>}
           </div>
-          <div style={{ fontSize: "0.78rem", color: COLORS.textSoft, marginTop: 2 }}>{diaSemana} · {fmtDate(sessao.data)}</div>
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderTop: `1px solid ${COLORS.border}`, background: "#FBF9F2" }}>
-        <div style={{ display: "flex" }}>
+        <span style={{ fontSize: "0.76rem", color: COLORS.textSoft }}>{dia.sessoes.length} sessão(ões)</span>
+        <div style={{ fontSize: "0.76rem", color: COLORS.textSoft, display: "flex", alignItems: "center", gap: 4 }}>
+          <Users size={13} /> {totalPessoas}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ---------- Cartão de sessão (dentro do dia) ----------
+function SessionRow({ sessao, dep, onClick }) {
+  const visiveis = sessao.itens.slice(0, 6);
+  const extra = sessao.itens.length - visiveis.length;
+  return (
+    <Card style={{ cursor: "pointer", padding: 12 }} onClick={onClick}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <h4 style={{ margin: 0, fontFamily: "'Lora', serif", color: COLORS.info, fontSize: "0.95rem" }}>{dep?.nome}</h4>
+          <Pill tone="comunidade">{sessao.periodo}</Pill>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
           {visiveis.map((e, i) => (
             <div key={e.id} style={{ marginLeft: i === 0 ? 0 : -10 }}>
-              <Avatar nome={e._pessoaNome} id={e.pessoaId} />
+              <Avatar nome={e._pessoaNome} id={e.pessoaId} size={26} />
             </div>
           ))}
           {extra > 0 && (
             <div style={{
-              marginLeft: -10, width: 30, height: 30, borderRadius: "50%", background: COLORS.missaoDark,
+              marginLeft: -10, width: 26, height: 26, borderRadius: "50%", background: COLORS.missaoDark,
               color: COLORS.info, display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.72rem", fontWeight: 700, border: "2px solid #fff"
-            }}>
-              +{extra}
-            </div>
+              fontSize: "0.68rem", fontWeight: 700, border: "2px solid #fff"
+            }}>+{extra}</div>
           )}
-        </div>
-        <div style={{ fontSize: "0.76rem", color: COLORS.textSoft, display: "flex", alignItems: "center", gap: 4 }}>
-          <Users size={13} /> {sessao.itens.length}
         </div>
       </div>
     </Card>
@@ -80,11 +126,13 @@ export default function Escalas() {
   const { profile } = useAuth();
   const { departamentos, funcoes, pessoas, escalas, escalasActions } = useChurchData();
   const [modalOpen, setModalOpen] = useState(false);
-  const [sessaoAberta, setSessaoAberta] = useState(null); // key da sessão selecionada
+  const [diaAberto, setDiaAberto] = useState(null);
+  const [sessaoAberta, setSessaoAberta] = useState(null);
   const [mesFiltro, setMesFiltro] = useState("");
 
   const isAdmin = profile.papel === "admin";
   const isLider = profile.papel === "lider";
+  const isMembro = profile.papel === "membro";
   const myDeptId = profile.departamentoId;
   const canManage = isAdmin || isLider;
   const currentUserName = userLabel(profile, departamentos);
@@ -103,26 +151,42 @@ export default function Escalas() {
     await escalasActions.remove(e.id, currentUserName, `Removeu escala de ${fmtDate(e.data)}.`);
   }
 
-  let visiveis = isAdmin ? escalas : isLider ? escalas.filter(e => e.departamentoId === myDeptId)
-    : escalas.filter(e => pessoas.find(p => p.id === e.pessoaId)?.atribuicoes.some(a => a.departamentoId === myDeptId) || e.departamentoId === myDeptId);
+  const semPessoaLigada = isMembro && !profile.pessoaId;
+
+  let visiveis;
+  if (isAdmin) visiveis = escalas;
+  else if (isLider) visiveis = escalas.filter(e => e.departamentoId === myDeptId);
+  else if (isMembro && profile.pessoaId) visiveis = escalas.filter(e => e.pessoaId === profile.pessoaId);
+  else visiveis = escalas.filter(e => e.departamentoId === myDeptId); // fallback: membro sem pessoa ligada
 
   if (mesFiltro) visiveis = visiveis.filter(e => e.data.startsWith(mesFiltro));
 
-  const sessoes = useMemo(() => {
+  const dias = useMemo(() => {
     const enriched = visiveis.map(e => ({ ...e, _pessoaNome: pessoas.find(p => p.id === e.pessoaId)?.nome || "?" }));
-    return groupSessions(enriched).sort((a, b) => a.data.localeCompare(b.data) || a.periodo.localeCompare(b.periodo));
+    return groupByDay(enriched).sort((a, b) => a.data.localeCompare(b.data));
   }, [visiveis, pessoas]);
 
-  const sessaoSelecionada = sessoes.find(s => s.key === sessaoAberta) || null;
+  const diaSelecionado = dias.find(d => d.data === diaAberto) || null;
+  const sessaoSelecionada = diaSelecionado?.sessoes.find(s => s.key === sessaoAberta) || null;
 
   return (
     <div>
       <SectionTitle
         icon={CalendarDays}
-        title="Escalas"
-        subtitle="Montagem mensal de escalas por departamento"
+        title={isMembro ? "A minha escala" : "Escalas"}
+        subtitle={isMembro ? "Os dias em que estás escalado" : "Montagem mensal de escalas por departamento"}
         action={canManage && <Button onClick={() => setModalOpen(true)}><Plus size={16} /> Nova escala</Button>}
       />
+
+      {semPessoaLigada && (
+        <Card style={{ marginBottom: 16, background: "#F4E3C1", border: "none", display: "flex", gap: 10 }}>
+          <Info size={18} color="#7A4E12" style={{ flexShrink: 0, marginTop: 1 }} />
+          <p style={{ margin: 0, fontSize: "0.84rem", color: "#7A4E12" }}>
+            A tua conta ainda não está ligada a uma pessoa da escala, por isso estás a ver a escala de todo o departamento.
+            Pede ao Administrador para te ligar na página "Utilizadores".
+          </p>
+        </Card>
+      )}
 
       <Card style={{ marginBottom: 16 }}>
         <Field label="Filtrar por mês">
@@ -130,18 +194,13 @@ export default function Escalas() {
         </Field>
       </Card>
 
-      {sessoes.length === 0 && (
+      {dias.length === 0 && (
         <Card><p style={{ textAlign: "center", color: COLORS.textSoft, margin: 0, padding: 12 }}>Nenhuma escala encontrada.</p></Card>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
-        {sessoes.map((s) => (
-          <SessionCard
-            key={s.key}
-            sessao={s}
-            dep={departamentos.find(d => d.id === s.departamentoId)}
-            onClick={() => setSessaoAberta(s.key)}
-          />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+        {dias.map((d) => (
+          <DayCard key={d.data} dia={d} departamentos={departamentos} onClick={() => setDiaAberto(d.data)} />
         ))}
       </div>
 
@@ -154,6 +213,15 @@ export default function Escalas() {
         />
       )}
 
+      {diaSelecionado && !sessaoSelecionada && (
+        <DiaDetalheModal
+          dia={diaSelecionado}
+          departamentos={departamentos}
+          onClose={() => setDiaAberto(null)}
+          onAbrirSessao={(key) => setSessaoAberta(key)}
+        />
+      )}
+
       {sessaoSelecionada && (
         <SessaoDetalheModal
           sessao={sessaoSelecionada}
@@ -162,7 +230,6 @@ export default function Escalas() {
           pessoas={pessoas}
           escalas={escalas}
           canManage={canManage}
-          isAdmin={isAdmin}
           onClose={() => setSessaoAberta(null)}
           onRemove={removeEscala}
           onAdd={addEscala}
@@ -172,9 +239,41 @@ export default function Escalas() {
   );
 }
 
-function SessaoDetalheModal({ sessao, dep, funcoes, pessoas, escalas, canManage, isAdmin, onClose, onRemove, onAdd }) {
+function DiaDetalheModal({ dia, departamentos, onClose, onAbrirSessao }) {
+  const { day, month, diaSemana } = dayMonth(dia.data);
+  return (
+    <Modal title="Sessões do dia" onClose={onClose} wide>
+      <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 18 }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 12, background: COLORS.info, flexShrink: 0,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#F3EFE3"
+        }}>
+          <div style={{ fontFamily: "'Lora', serif", fontSize: "1.35rem", lineHeight: 1 }}>{day}</div>
+          <div style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>{month}</div>
+        </div>
+        <div>
+          <h3 style={{ margin: 0, fontFamily: "'Lora', serif", color: COLORS.info, fontSize: "1.1rem" }}>{diaSemana}</h3>
+          <div style={{ fontSize: "0.8rem", color: COLORS.textSoft }}>{fmtDate(dia.data)}</div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {dia.sessoes.map((s) => (
+          <SessionRow key={s.key} sessao={s} dep={departamentos.find(d => d.id === s.departamentoId)} onClick={() => onAbrirSessao(s.key)} />
+        ))}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+        <Button variant="ghost" onClick={onClose}>Fechar</Button>
+      </div>
+    </Modal>
+  );
+}
+
+function SessaoDetalheModal({ sessao, dep, funcoes, pessoas, escalas, canManage, onClose, onRemove, onAdd }) {
   const [addOpen, setAddOpen] = useState(false);
   const { day, month, diaSemana } = dayMonth(sessao.data);
+  const jaPassou = sessao.data < hojeStr();
 
   return (
     <Modal title="Detalhes da escala" onClose={onClose} wide>
@@ -194,8 +293,15 @@ function SessaoDetalheModal({ sessao, dep, funcoes, pessoas, escalas, canManage,
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <span style={{ fontSize: "0.82rem", color: COLORS.textSoft, fontWeight: 600 }}>Participantes ({sessao.itens.length})</span>
-        {canManage && <Button variant="secondary" onClick={() => setAddOpen(true)} style={{ padding: "5px 10px", fontSize: "0.78rem" }}><Plus size={13} /> Adicionar pessoa</Button>}
+        {canManage && (
+          <Button variant="secondary" onClick={() => setAddOpen(true)} disabled={jaPassou} style={{ padding: "5px 10px", fontSize: "0.78rem" }}>
+            <Plus size={13} /> Adicionar pessoa
+          </Button>
+        )}
       </div>
+      {canManage && jaPassou && (
+        <p style={{ fontSize: "0.76rem", color: COLORS.textSoft, marginTop: 0 }}>Este dia já passou — não é possível adicionar novos participantes.</p>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {sessao.itens.map((e) => {
@@ -252,6 +358,8 @@ function AdicionarParticipanteModal({ sessao, funcoes, pessoas, escalas, onClose
     if (pessoa && pessoa.disponibilidade.length > 0 && diaSemana && !pessoa.disponibilidade.includes(diaSemana)) {
       avisos.push(`Esta pessoa indicou não ter disponibilidade às ${diaSemana}s.`);
     }
+    const sobrecarga = usarSobrecarga(escalas, pessoaId, sessao.data, sessao.departamentoId);
+    if (sobrecarga) avisos.push(sobrecarga);
     return avisos;
   }, [pessoaId, sessao, escalas, pessoas]);
 
@@ -305,9 +413,12 @@ function EscalaModal({ departamentos, funcoes, pessoas, escalas, isAdmin, myDept
   const [pessoaId, setPessoaId] = useState("");
   const [dataEsc, setDataEsc] = useState("");
   const [periodo, setPeriodo] = useState(PERIODOS[0]);
+  const hoje = hojeStr();
 
   const funcoesDoDept = funcoes.filter(f => f.departamentoId === depId);
   const pessoasDoDept = pessoas.filter(p => p.atribuicoes.some(a => a.departamentoId === depId));
+
+  const dataNoPassado = dataEsc && dataEsc < hoje;
 
   const conflitos = useMemo(() => {
     if (!pessoaId || !dataEsc || !periodo) return [];
@@ -322,10 +433,12 @@ function EscalaModal({ departamentos, funcoes, pessoas, escalas, isAdmin, myDept
     if (pessoa && pessoa.disponibilidade.length > 0 && diaSemana && !pessoa.disponibilidade.includes(diaSemana)) {
       avisos.push(`Esta pessoa indicou não ter disponibilidade às ${diaSemana}s.`);
     }
+    const sobrecarga = usarSobrecarga(escalas, pessoaId, dataEsc, depId);
+    if (sobrecarga) avisos.push(sobrecarga);
     return avisos;
   }, [pessoaId, dataEsc, periodo, depId, escalas, departamentos, pessoas]);
 
-  const podeGuardar = depId && funcaoId && pessoaId && dataEsc && periodo;
+  const podeGuardar = depId && funcaoId && pessoaId && dataEsc && periodo && !dataNoPassado;
 
   return (
     <Modal title="Nova escala" onClose={onClose}>
@@ -348,13 +461,19 @@ function EscalaModal({ departamentos, funcoes, pessoas, escalas, isAdmin, myDept
           </Select>
         </Field>
         <div style={{ display: "flex", gap: 10 }}>
-          <Field label="Data"><TextInput type="date" value={dataEsc} onChange={(e) => setDataEsc(e.target.value)} /></Field>
+          <Field label="Data"><TextInput type="date" min={hoje} value={dataEsc} onChange={(e) => setDataEsc(e.target.value)} /></Field>
           <Field label="Período">
             <Select value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
               {PERIODOS.map((p) => <option key={p} value={p}>{p}</option>)}
             </Select>
           </Field>
         </div>
+
+        {dataNoPassado && (
+          <div style={{ background: "#F3DAD2", color: "#8A3A28", borderRadius: 8, padding: "8px 12px", fontSize: "0.82rem" }}>
+            Não é possível marcar uma escala para um dia que já passou.
+          </div>
+        )}
 
         {conflitos.length > 0 && (
           <div style={{ background: "#F4E3C1", borderRadius: 10, padding: 12, display: "flex", gap: 8 }}>
