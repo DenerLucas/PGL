@@ -75,7 +75,9 @@ function Shell() {
 
           @media (max-width: 860px) {
             .sidebar {
-              position: fixed; top: 0; left: 0; height: 100vh; z-index: 50;
+              position: fixed; top: 0; left: 0; z-index: 50;
+              height: 100vh; height: 100dvh; min-height: 0;
+              overflow-y: auto;
               transform: translateX(-100%); transition: transform 0.22s ease;
             }
             .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(14,43,42,0.25); }
